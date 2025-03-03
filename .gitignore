@@ -1,0 +1,56 @@
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+
+# Virtual environment
+venv/
+env/
+ENV/
+.env
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IDE specific files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# PyCaret generated models & data
+models/
+data/
+
+# Streamlit
+.streamlit/
+
+# Operating system files
+.DS_Store
+Thumbs.db
+
+# Log files
+*.log
+
+# NGrok configuration
+ngrok.yml
+.ngrok2/
+
+# Temporary experiment files
+experiments/
+logs/
+temp/
+
+# Large data files
+*.csv
+*.xlsx
+*.json
+!requirements.txt
+
+# Pickled files
+*.pkl
