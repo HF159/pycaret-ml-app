@@ -50,21 +50,17 @@ A comprehensive Streamlit-based machine learning application using PyCaret for e
 - **Sharing**: Ngrok (for public access when needed)
 
 ## Screenshots
+![image](https://github.com/user-attachments/assets/6877c8a5-b326-40d7-946a-cd9ce45cb189)
 
-[TO BE ADDED]
+![image](https://github.com/user-attachments/assets/b0691145-9fbb-4ec6-9776-1e73ab862e83)
 
-*Screenshots will be added showing the different pages of the application:*
-- *Data upload interface*
-- *Data exploration visualizations*
-- *Preprocessing options*
-- *Model training and evaluation*
-- *Prediction interface*
+
 
 ## Setup Instructions
 
 ### Prerequisites
 
-- Python 3.8 or higher
+- Python 3.8 to 3.11
 - pip (Python package installer)
 - Virtual environment tool (recommended)
 
