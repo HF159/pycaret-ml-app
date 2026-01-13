@@ -13,7 +13,7 @@ from pycaret.regression import create_model as reg_create_model, tune_model as r
 from pycaret.regression import save_model as reg_save_model, load_model as reg_load_model
 from config.settings import TASK_TYPES, RANDOM_STATE, MODEL_SAVE_DIR
 
-def initialize_setup(df, target_column, task_type, preprocess=True, normalize=True, session_id=RANDOM_STATE):
+def initialize_setup(df, target_column, task_type, preprocess=False, normalize=False, session_id=RANDOM_STATE):
     """
     Initialize PyCaret setup
     
@@ -46,8 +46,8 @@ def initialize_setup(df, target_column, task_type, preprocess=True, normalize=Tr
                 setup_params = {
                     'data': df,
                     'target': target_column,
-                    'preprocess': preprocess,
-                    'normalize': normalize,
+                    'preprocess': False,         # We already handled missing values and encoding
+                    'normalize': True,           # Let PyCaret handle scaling
                     'session_id': session_id,
                     'verbose': False,
                     'html': False,
@@ -65,22 +65,24 @@ def initialize_setup(df, target_column, task_type, preprocess=True, normalize=Tr
                     st.info(f"Setting n_neighbors={neighbors} for KNN-based algorithms due to small class size.")
             else:
                 # Standard setup parameters for normal-sized datasets
+                # Note: We already did encoding, so tell PyCaret to skip it
                 setup_params = {
                     'data': df,
                     'target': target_column,
-                    'preprocess': preprocess,
-                    'normalize': normalize,
+                    'preprocess': False,  # We already handled missing values and encoding
+                    'normalize': True,    # Let PyCaret handle scaling
                     'session_id': session_id,
                     'verbose': False,
                     'html': False
                 }
         else:
             # Standard setup parameters for regression
+            # Note: We already did encoding, so tell PyCaret to skip it
             setup_params = {
                 'data': df,
                 'target': target_column,
-                'preprocess': preprocess,
-                'normalize': normalize,
+                'preprocess': False,  # We already handled missing values and encoding
+                'normalize': True,    # Let PyCaret handle scaling
                 'session_id': session_id,
                 'verbose': False,
                 'html': False

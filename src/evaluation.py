@@ -6,8 +6,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 import streamlit as st
-from pycaret.classification import plot_model as clf_plot_model, pull as clf_pull
-from pycaret.regression import plot_model as reg_plot_model, pull as reg_pull
+from pycaret.classification import pull as clf_pull
+from pycaret.regression import pull as reg_pull
 from sklearn.metrics import confusion_matrix, classification_report
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from config.settings import CLASSIFICATION_METRICS, REGRESSION_METRICS, FIG_SIZE, COLOR_PALETTE
@@ -322,23 +322,52 @@ def plot_residuals(y_test, y_pred):
 def get_classification_report(y_test, y_pred):
     """
     Get classification report as a dataframe
-    
+
     Args:
         y_test: Actual values
         y_pred: Predicted values
-        
+
     Returns:
         pandas.DataFrame: Classification report as a dataframe
     """
     try:
         # Get classification report as text
         report = classification_report(y_test, y_pred, output_dict=True)
-        
+
         # Convert to dataframe
         report_df = pd.DataFrame(report).transpose()
-        
+
         return report_df
-        
+
     except Exception as e:
         st.error(f"Error generating classification report: {str(e)}")
+        return None
+
+def get_model_comparison_results(task_type):
+    """
+    Get model comparison results from PyCaret
+
+    Args:
+        task_type: Task type (classification/regression)
+
+    Returns:
+        pandas.DataFrame: Model comparison results
+    """
+    try:
+        # Pull the comparison results from PyCaret
+        if task_type == "classification":
+            comparison_df = clf_pull()
+        else:
+            comparison_df = reg_pull()
+
+        # Reset index to show model names as a column
+        if comparison_df is not None:
+            comparison_df = comparison_df.reset_index()
+            if 'index' in comparison_df.columns:
+                comparison_df = comparison_df.rename(columns={'index': 'Model'})
+
+        return comparison_df
+
+    except Exception as e:
+        st.warning(f"Could not retrieve comparison results: {str(e)}")
         return None

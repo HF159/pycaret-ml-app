@@ -68,23 +68,27 @@ def handle_missing_values(df, method, columns=None, fill_value=None):
                 if processed_df[col].dropna().size > 0:
                     processed_df[col] = processed_df[col].fillna(processed_df[col].mean())
                 else:
-                    # Fill with 0 if all values are NaN
-                    processed_df[col] = processed_df[col].fillna(0)
+                    # If all values are NaN, this column should have been dropped earlier
+                    st.warning(f"Column '{col}' has all NaN values. Consider dropping it.")
+                    processed_df[col] = processed_df[col].fillna(processed_df[col].mean())  # Will be NaN
             elif method == 'median' and pd.api.types.is_numeric_dtype(processed_df[col]):
                 # Check if column has non-NaN values
                 if processed_df[col].dropna().size > 0:
                     processed_df[col] = processed_df[col].fillna(processed_df[col].median())
                 else:
-                    # Fill with 0 if all values are NaN
-                    processed_df[col] = processed_df[col].fillna(0)
+                    # If all values are NaN, this column should have been dropped earlier
+                    st.warning(f"Column '{col}' has all NaN values. Consider dropping it.")
+                    processed_df[col] = processed_df[col].fillna(processed_df[col].median())  # Will be NaN
             elif method == 'mode':
                 # Check if column has non-NaN values
                 if processed_df[col].dropna().size > 0:
                     processed_df[col] = processed_df[col].fillna(processed_df[col].mode()[0])
                 else:
-                    # Fill with a placeholder if all values are NaN
+                    # If all values are NaN, this column should have been dropped earlier
+                    st.warning(f"Column '{col}' has all NaN values. Consider dropping it.")
                     if pd.api.types.is_numeric_dtype(processed_df[col]):
-                        processed_df[col] = processed_df[col].fillna(0)
+                        # For numeric, leave as NaN to be caught by validation
+                        pass
                     else:
                         processed_df[col] = processed_df[col].fillna("Unknown")
             elif method == 'constant':
@@ -94,23 +98,26 @@ def handle_missing_values(df, method, columns=None, fill_value=None):
                         numeric_fill = float(fill_value)
                         processed_df[col] = processed_df[col].fillna(numeric_fill)
                     except ValueError:
-                        # If cannot convert to float, use 0
-                        processed_df[col] = processed_df[col].fillna(0)
-                        st.warning(f"Could not convert '{fill_value}' to number for column '{col}'. Using 0 instead.")
+                        # If cannot convert to float, use median as fallback
+                        if processed_df[col].dropna().size > 0:
+                            processed_df[col] = processed_df[col].fillna(processed_df[col].median())
+                            st.warning(f"Could not convert '{fill_value}' to number for column '{col}'. Using median instead.")
+                        else:
+                            st.warning(f"Could not convert '{fill_value}' to number and column '{col}' has no valid data.")
                 else:
                     # Use string as is for non-numeric columns
                     processed_df[col] = processed_df[col].fillna(str(fill_value) if fill_value is not None else "Unknown")
             else:
-                st.warning(f"Method '{method}' not applicable for column '{col}', using mode instead.")
-                # Fall back to mode
+                st.warning(f"Method '{method}' not applicable for column '{col}', using appropriate fallback.")
+                # Fall back to appropriate method
                 if processed_df[col].dropna().size > 0:
-                    processed_df[col] = processed_df[col].fillna(processed_df[col].mode()[0])
-                else:
-                    # Fill with a placeholder if all values are NaN
                     if pd.api.types.is_numeric_dtype(processed_df[col]):
-                        processed_df[col] = processed_df[col].fillna(0)
+                        processed_df[col] = processed_df[col].fillna(processed_df[col].median())
                     else:
-                        processed_df[col] = processed_df[col].fillna("Unknown")
+                        processed_df[col] = processed_df[col].fillna(processed_df[col].mode()[0])
+                else:
+                    # If all values are NaN, this column should have been dropped earlier
+                    st.warning(f"Column '{col}' has all NaN values and should be dropped.")
     
     return processed_df
 
@@ -308,46 +315,154 @@ def drop_columns(df, columns_to_drop):
     
     return processed_df
 
-def preprocess_pipeline(df, preprocessing_steps):
+def auto_preprocess_data(df, target_column):
     """
-    Apply a series of preprocessing steps to the dataframe
-    
+    Automatically preprocess data with smart defaults
+
     Args:
         df: pandas.DataFrame
-        preprocessing_steps: Dict of preprocessing steps to apply
-        
+        target_column: Target column name
+
     Returns:
         tuple: (processed dataframe, preprocessing metadata)
     """
     processed_df = df.copy()
     metadata = {}
-    
+
+    # Check if dataframe is not empty
+    if processed_df.empty:
+        st.error("Cannot preprocess an empty dataframe")
+        return None, metadata
+
+    try:
+        # 1. Drop rows with too many missing values (>50% of columns are missing)
+        missing_threshold = 0.5
+        initial_rows = len(processed_df)
+
+        # Calculate how many missing values each row has
+        missing_per_row = processed_df.isnull().sum(axis=1)
+        total_columns = len(processed_df.columns)
+
+        # Identify rows where more than 50% of values are missing
+        rows_to_keep = missing_per_row / total_columns <= missing_threshold
+        processed_df = processed_df[rows_to_keep]
+
+        rows_dropped = initial_rows - len(processed_df)
+
+        if rows_dropped > 0:
+            st.warning(f"🗑️ Dropped {rows_dropped} row(s) with >50% missing values ({rows_dropped/initial_rows*100:.1f}% of data)")
+            metadata['rows_dropped_missing'] = rows_dropped
+        else:
+            metadata['rows_dropped_missing'] = 0
+
+        # Check if we still have enough data
+        if len(processed_df) < 10:
+            st.error("❌ Too few rows remaining after dropping rows with missing values. Please review your data quality.")
+            return None, metadata
+
+        # 2. Handle remaining missing values intelligently
+        missing_count = processed_df.isnull().sum().sum()
+        if missing_count > 0:
+            # Get columns with missing values (excluding target)
+            missing_cols = [col for col in processed_df.columns
+                          if col != target_column and processed_df[col].isnull().sum() > 0]
+
+            # Handle numeric columns with median (more robust than mean)
+            numeric_missing = [col for col in missing_cols if pd.api.types.is_numeric_dtype(processed_df[col])]
+            if numeric_missing:
+                processed_df = handle_missing_values(processed_df, 'median', numeric_missing)
+
+            # Handle categorical columns with mode
+            categorical_missing = [col for col in missing_cols if not pd.api.types.is_numeric_dtype(processed_df[col])]
+            if categorical_missing:
+                processed_df = handle_missing_values(processed_df, 'mode', categorical_missing)
+
+            metadata['missing_values_handled'] = len(missing_cols)
+        else:
+            metadata['missing_values_handled'] = 0
+
+        # 2. Encode target column if it's categorical (for classification)
+        if processed_df[target_column].dtype == 'object' or processed_df[target_column].dtype == 'category':
+            st.info(f"🔄 Encoding target column '{target_column}' for classification")
+            from sklearn.preprocessing import LabelEncoder
+            target_encoder = LabelEncoder()
+            processed_df[target_column] = target_encoder.fit_transform(processed_df[target_column])
+            metadata['target_encoder'] = target_encoder
+            metadata['target_encoded'] = True
+        else:
+            metadata['target_encoded'] = False
+
+        # 3. Encode categorical feature variables (excluding target)
+        categorical_cols = [col for col in processed_df.columns if col != target_column and
+                          (processed_df[col].dtype == 'object' or processed_df[col].dtype == 'category')]
+
+        if categorical_cols:
+            processed_df, encoders = encode_categorical(processed_df, 'label', categorical_cols)
+            metadata['encoders'] = encoders
+            metadata['categorical_encoded'] = len(categorical_cols)
+        else:
+            metadata['categorical_encoded'] = 0
+
+        # 4. Drop columns with zero variance (all same value)
+        columns_to_drop = []
+        for col in processed_df.columns:
+            if col != target_column and processed_df[col].nunique() <= 1:
+                columns_to_drop.append(col)
+
+        if columns_to_drop:
+            processed_df = processed_df.drop(columns=columns_to_drop)
+            metadata['columns_dropped'] = columns_to_drop
+        else:
+            metadata['columns_dropped'] = []
+
+        # Note: We don't do feature scaling here because PyCaret will handle it
+
+        return processed_df, metadata
+
+    except Exception as e:
+        st.error(f"Error in automatic preprocessing: {str(e)}")
+        return None, {}
+
+def preprocess_pipeline(df, preprocessing_steps):
+    """
+    Apply a series of preprocessing steps to the dataframe
+
+    Args:
+        df: pandas.DataFrame
+        preprocessing_steps: Dict of preprocessing steps to apply
+
+    Returns:
+        tuple: (processed dataframe, preprocessing metadata)
+    """
+    processed_df = df.copy()
+    metadata = {}
+
     # Check if dataframe is not empty
     if processed_df.empty:
         st.error("Cannot preprocess an empty dataframe")
         return processed_df, metadata
-    
+
     try:
         # Drop columns
         if 'drop_columns' in preprocessing_steps:
             processed_df = drop_columns(processed_df, preprocessing_steps['drop_columns'])
             metadata['dropped_columns'] = preprocessing_steps['drop_columns']
-        
+
         # Handle missing values
         if 'missing_values' in preprocessing_steps:
             processed_df = handle_missing_values(
-                processed_df, 
+                processed_df,
                 preprocessing_steps['missing_values']['method'],
                 preprocessing_steps['missing_values'].get('columns'),
                 preprocessing_steps['missing_values'].get('fill_value')
             )
             metadata['missing_values'] = preprocessing_steps['missing_values']
-        
+
         # Check if we still have data after handling missing values
         if processed_df.empty:
             st.error("Preprocessing resulted in an empty dataframe")
             return df.copy(), {}
-        
+
         # Encode categorical variables
         if 'categorical_encoding' in preprocessing_steps:
             processed_df, encoders = encode_categorical(
@@ -357,7 +472,7 @@ def preprocess_pipeline(df, preprocessing_steps):
             )
             metadata['encoders'] = encoders
             metadata['categorical_encoding'] = preprocessing_steps['categorical_encoding']
-        
+
         # Scale features
         if 'feature_scaling' in preprocessing_steps:
             processed_df, scaler = feature_scaling(
@@ -367,7 +482,7 @@ def preprocess_pipeline(df, preprocessing_steps):
             )
             metadata['scaler'] = scaler
             metadata['feature_scaling'] = preprocessing_steps['feature_scaling']
-        
+
         return processed_df, metadata
     except Exception as e:
         st.error(f"Error in preprocessing pipeline: {str(e)}")

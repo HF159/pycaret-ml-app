@@ -179,22 +179,90 @@ def get_column_types(df):
     }
     return column_types
 
+def clean_dataframe(df):
+    """
+    Clean dataframe by removing problematic columns
+
+    Args:
+        df: pandas.DataFrame
+
+    Returns:
+        tuple: (cleaned DataFrame, list of removed columns with reasons)
+    """
+    removed_columns = []
+    df_cleaned = df.copy()
+
+    for col in df.columns:
+        try:
+            # Check for unhashable types (lists, dicts, sets)
+            if len(df[col].dropna()) > 0:
+                sample_value = df[col].dropna().iloc[0]
+                if isinstance(sample_value, (list, dict, set)):
+                    removed_columns.append((col, "Contains complex data types (lists/dicts)"))
+                    df_cleaned = df_cleaned.drop(columns=[col])
+                    continue
+
+            # Check if column is all NaN
+            if df[col].isna().all():
+                removed_columns.append((col, "All values are missing"))
+                df_cleaned = df_cleaned.drop(columns=[col])
+                continue
+
+            # Check if column has only one unique value (excluding NaN)
+            if df[col].nunique() <= 1:
+                removed_columns.append((col, "Only one unique value"))
+                df_cleaned = df_cleaned.drop(columns=[col])
+                continue
+
+        except Exception as e:
+            # If we can't process the column, remove it
+            removed_columns.append((col, f"Error processing: {str(e)[:50]}"))
+            df_cleaned = df_cleaned.drop(columns=[col])
+
+    return df_cleaned, removed_columns
+
 def get_suitable_target_columns(df):
     """
     Get columns that might be suitable as target variables
-    
+
     Args:
         df: pandas.DataFrame
-        
+
     Returns:
         list: List of potential target columns
     """
+    suitable_columns = []
+
     # Numeric columns with more than one unique value
-    numeric_targets = [col for col in df.select_dtypes(include=['number']).columns 
-                      if df[col].nunique() > 1]
-    
+    try:
+        numeric_cols = df.select_dtypes(include=['number']).columns
+        for col in numeric_cols:
+            try:
+                if df[col].nunique() > 1:
+                    suitable_columns.append(col)
+            except:
+                continue  # Skip columns that can't be processed
+    except:
+        pass
+
     # Categorical columns with more than one and fewer than 100 unique values
-    categorical_targets = [col for col in df.select_dtypes(include=['object', 'category']).columns 
-                          if 1 < df[col].nunique() < 100]
-    
-    return numeric_targets + categorical_targets
+    try:
+        categorical_cols = df.select_dtypes(include=['object', 'category']).columns
+        for col in categorical_cols:
+            try:
+                # Check if column contains unhashable types (lists, dicts, etc.)
+                sample_value = df[col].dropna().iloc[0] if len(df[col].dropna()) > 0 else None
+                if sample_value is not None and isinstance(sample_value, (list, dict, set)):
+                    # Skip columns with complex data types
+                    continue
+
+                unique_count = df[col].nunique()
+                if 1 < unique_count < 100:
+                    suitable_columns.append(col)
+            except (TypeError, AttributeError):
+                # Skip columns that cause errors (unhashable types, etc.)
+                continue
+    except:
+        pass
+
+    return suitable_columns
