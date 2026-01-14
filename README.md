@@ -1,103 +1,100 @@
 # 🤖 PyCaret Machine Learning App
 
-![Python](https://img.shields.io/badge/Python-3.8%2B-blue)
-![Streamlit](https://img.shields.io/badge/Streamlit-1.28.0%2B-red)
-![PyCaret](https://img.shields.io/badge/PyCaret-3.0.0%2B-green)
-
-A simplified, user-friendly web application for machine learning built with **Streamlit** and **PyCaret**. Perfect for educational purposes and quick ML prototyping!
-
-## ✨ Key Features
-
-### 1. **Data Upload** 📁
-- Upload datasets in CSV, Excel (.xlsx), or JSON format
-- Automatic data overview with data types and missing values analysis
-- Clear visualization of dataset structure
-
-### 2. **Data Exploration** 🔍
-- Interactive dataset summary and statistics
-- Target variable selection with automatic task type detection
-- Visual distribution analysis for both classification and regression
-- Class imbalance warnings
-
-### 3. **Preprocessing** ⚙️
-- **Automatic preprocessing** with smart defaults
-  - Missing values handled automatically (numeric: mean, categorical: mode)
-  - Categorical encoding using Label Encoding
-  - Zero-variance columns automatically removed
-- Configurable train-test split (default: 80/20)
-- Preview of processed data
-
-### 4. **Model Training** 🤖
-- Automatic task type detection (Classification vs Regression)
-- **Two training options:**
-  - **Compare Multiple Models**: Train and compare 3-10 models automatically
-  - **Train Specific Model**: Choose from 8+ popular algorithms
-- PyCaret integration for professional ML workflows
-- Progress tracking with clear status indicators
-
-### 5. **Model Evaluation** 📊
-- Comprehensive performance metrics
-  - **Classification**: Accuracy, Precision, Recall, F1, AUC
-  - **Regression**: R², MAE, RMSE, MAPE
-- **Model Comparison Results** table (when comparing models)
-- Visual evaluation:
-  - Confusion Matrix (classification)
-  - Actual vs Predicted plot (regression)
-  - Feature Importance chart
-- Model saving functionality
-
-### 6. **Prediction** 🔮
-- Predictions on test data with performance summary
-- Upload new data files for batch predictions
-- Downloadable results as CSV
-- Probability scores for classification tasks
-
-### 7. **Ngrok Integration** 🌐
-- **Expose your app publicly** via Ngrok
-- Share with anyone over the internet
-- Easy one-click launch scripts
+A web application for machine learning built with **Streamlit** and **PyCaret**.
 
 ---
 
-## 🚀 Installation
+## 📋 Setup
 
 ### Prerequisites
 - Python 3.8 or higher
 - pip (Python package manager)
+- Git (optional, for cloning)
 
-### Quick Start
+### Installation Steps
+
+#### 1. Get the Code
 
 ```bash
-# 1. Clone or download the repository
-git clone <your-repo-url>
+# Download the project ZIP file and extract it
+# Then navigate to the folder
 cd pycaret-ml-app
+```
 
-# 2. Install dependencies
+#### 2. Create Virtual Environment (Recommended)
+
+**Windows:**
+```bash
+# Create virtual environment
+python -m venv venv
+
+# Activate (choose based on your terminal):
+# PowerShell or CMD:
+venv\Scripts\activate
+
+# Git Bash or WSL:
+source venv/Scripts/activate
+```
+
+**Linux/Mac:**
+```bash
+python3 -m venv venv
+source venv/bin/activate
+```
+
+You should see `(venv)` in your terminal prompt.
+
+#### 3. Install Dependencies
+
+```bash
 pip install -r requirements.txt
-
-# 3. Run the app
-streamlit run main.py
 ```
 
 ---
 
-## 💻 How to Run
+## 🌐 Ngrok Setup (For Public Access)
 
-### Option 1: Local Access (Recommended for Development)
+### First Time Setup
 
-**Windows/Linux/Mac:**
+#### 1. Sign Up for Ngrok
+
+1. Go to [https://ngrok.com/](https://ngrok.com/)
+2. Click "Sign up" and create a free account
+3. After signing in, go to your dashboard
+
+#### 2. Get Your Authtoken
+
+1. In the ngrok dashboard, navigate to "Your Authtoken" section
+2. Copy your authtoken (looks like: `2abc123def456ghi789jkl012mno345_6PQRSTUVWXYZabcdefghij`)
+
+#### 3. Configure Ngrok
+
+Run this command once (replace `YOUR_AUTHTOKEN` with your actual token):
+
+```bash
+ngrok config add-authtoken YOUR_AUTHTOKEN
+```
+
+This only needs to be done once. Ngrok will remember your authtoken.
+
+---
+
+## 🚀 How to Run
+
+### Option 1: Run Locally
+
 ```bash
 streamlit run main.py
 ```
-The app will open at `http://localhost:8501`
+The app will be available at `http://localhost:8501`
 
-### Option 2: Public Access with Ngrok (Share with Others)
+### Option 2: Run with Ngrok (Public Access)
+
+**Using Shell Scripts:**
 
 **Windows:**
 ```bash
 # Double-click start_app.bat and choose option 2
-# OR run directly:
-python run_with_ngrok.py
 ```
 
 **Linux/Mac:**
@@ -107,184 +104,24 @@ chmod +x start_app.sh
 # Choose option 2 when prompted
 ```
 
----
-
-## 📖 Complete Workflow Guide
-
-### Step 1: Upload Your Data
-1. Navigate to **📁 Data Upload**
-2. Upload a CSV, Excel, or JSON file
-3. Review the automatic data overview
-4. Click **➡️ Proceed to Data Exploration**
-
-### Step 2: Explore and Select Target
-1. Review dataset summary statistics
-2. Select your **target variable** (what you want to predict)
-3. System automatically detects task type (classification/regression)
-4. Check target distribution and balance
-5. Click **➡️ Proceed to Preprocessing**
-
-### Step 3: Preprocess Data
-1. Review automatic preprocessing operations
-2. Adjust train-test split ratio if needed
-3. Click **🚀 Start Preprocessing**
-4. Review processed data preview
-5. Click **➡️ Proceed to Model Training**
-
-### Step 4: Train Models
-1. Click **🚀 Initialize Setup** (30-60 seconds)
-2. Choose training method:
-   - **Option A**: Compare 3-10 models (finds best automatically)
-   - **Option B**: Train a specific algorithm
-3. Wait for training to complete
-4. Click **➡️ Proceed to Evaluation**
-
-### Step 5: Evaluate Model
-1. View model comparison results (if applicable)
-2. Review performance metrics
-3. Analyze visualizations
-4. **💾 Save Model** with a custom name
-5. Click **➡️ Proceed to Prediction**
-
-### Step 6: Make Predictions
-1. **Test Predictions**: Click **🔮 Generate Test Predictions**
-2. **New Data**: Upload file → **🔮 Generate Predictions**
-3. Download results as CSV
-
----
-
-## 📊 Supported Algorithms
-
-### Classification
-Logistic Regression • Decision Tree • Random Forest • K-Nearest Neighbors • Naive Bayes • Support Vector Machine • XGBoost • LightGBM
-
-### Regression
-Linear Regression • Lasso • Ridge • Elastic Net • Decision Tree • Random Forest • K-Nearest Neighbors • XGBoost • LightGBM
-
----
-
-## 📂 Project Structure
-
-```
-pycaret-ml-app/
-├── main.py                 # Main application entry point
-├── run_with_ngrok.py       # Ngrok integration script
-├── start_app.bat           # Windows launcher
-├── start_app.sh            # Linux/Mac launcher
-├── requirements.txt        # Dependencies
-├── README.md               # Documentation
-├── config/
-│   └── settings.py         # Configuration
-├── pages/                  # UI pages
-│   ├── data_upload.py
-│   ├── data_exploration.py
-│   ├── preprocessing.py
-│   ├── model_training.py
-│   ├── evaluation.py
-│   └── prediction.py
-└── src/                    # Core functions
-    ├── data_utils.py
-    ├── preprocessing.py
-    ├── model_training.py
-    ├── evaluation.py
-    └── prediction.py
-```
-
----
-
-## 🛠️ Troubleshooting
-
-### Port 8501 already in use
+**Or Run Directly:**
 ```bash
-# Windows:
-netstat -ano | findstr :8501
-taskkill /PID <PID> /F
-
-# Linux/Mac:
-lsof -ti:8501 | xargs kill -9
+python run_with_ngrok.py
 ```
 
-### PyCaret installation fails
-```bash
-# Install in virtual environment
-python -m venv venv
-source venv/bin/activate  # Linux/Mac
-venv\Scripts\activate     # Windows
-
-pip install --no-cache-dir pycaret
-```
-
-### Ngrok tunnel fails
-- Check internet connection
-- Verify `pip install pyngrok`
-- Try running with admin/sudo privileges
-
-### "Class has fewer than 2 samples" error
-- Go back to Data Exploration
-- Choose a different target column
-- Or collect more data for rare classes
+The script will:
+1. Start the Streamlit app
+2. Create a public ngrok tunnel
+3. Display a public URL (e.g., `https://xxxx-xx-xx-xxx-xxx.ngrok.io`)
+4. Share this URL with anyone to access your app
 
 ---
 
-## 💡 Tips for Best Results
+## 🌐 Ngrok Configuration
 
-- Start with clean, well-structured datasets
-- Ensure at least 2 samples per class for classification
-- Check for missing values before upload
-- Use 80/20 or 70/30 train-test split
-- Compare multiple models to find the best one
-- Save your model before making predictions
+The `run_with_ngrok.py` script automatically:
+- Starts Streamlit on port 8501
+- Creates an ngrok tunnel to expose the app publicly
+- Provides a shareable URL
 
----
-
-## 🎓 Educational Purpose
-
-Perfect for:
-- Learning ML workflows
-- Understanding data preprocessing
-- Comparing ML algorithms
-- Quick prototyping
-- Computational linguistics courses
-- Data science education
-
----
-
-## 📝 System Requirements
-
-### Minimum
-- RAM: 4GB (8GB recommended)
-- Storage: 2GB free space
-- Python: 3.8, 3.9, 3.10, or 3.11
-- Internet (for setup and Ngrok)
-
----
-
-## 🙏 Acknowledgments
-
-- **PyCaret**: Low-code ML library
-- **Streamlit**: Web app framework
-- **Scikit-learn**: ML algorithms
-- **Ngrok**: Public tunnel service
-
----
-
-## 📄 License
-
-Created for educational purposes.
-
----
-
-## 🎯 Version 2.0 - Simplified & Streamlined
-
-**Changes:**
-- ✅ Removed complex features
-- ✅ Added automatic preprocessing
-- ✅ Enhanced model comparison display
-- ✅ Added Ngrok integration
-- ✅ Improved UI/UX with clear workflow
-- ✅ Better error handling
-- ✅ Clearer documentation
-
----
-
-**Made with ❤️ for Machine Learning Education**
+**Note:** The ngrok URL changes each time you restart the app (unless you use a paid ngrok account with custom domains).
